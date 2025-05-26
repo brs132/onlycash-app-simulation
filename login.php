@@ -27,6 +27,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($user['email'] === $email && password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['email'] = $user['email'];
+                // Load balance and evaluatedImages or set defaults
+                $_SESSION['balance'] = isset($user['balance']) ? $user['balance'] : 0;
+                $_SESSION['evaluatedImages'] = isset($user['evaluatedImages']) ? $user['evaluatedImages'] : [];
                 $authenticated = true;
                 header("Location: app.php");
                 exit;
