@@ -235,6 +235,7 @@ $userEmail = $_SESSION['email'] ?? '';
     // Atualiza o saldo exibido
     function updateBalance() {
         balanceEl.textContent = balance.toFixed(2);
+        localStorage.setItem('onlycash_balance', balance.toFixed(2));
     }
 
     // Atualiza a copy do modal de saldo
@@ -348,6 +349,10 @@ $userEmail = $_SESSION['email'] ?? '';
     });
 
     // Initialize
+    const savedBalance = localStorage.getItem('onlycash_balance');
+    if (savedBalance) {
+        balance = parseFloat(savedBalance);
+    }
     updateImage();
     updateQuestion();
     updateBalance();
