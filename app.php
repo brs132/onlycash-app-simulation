@@ -194,8 +194,45 @@ $userEmail = $_SESSION['email'] ?? '';
 
     let currentIndex = 0;
     let currentQuestionIndex = 0;
-    let balance = 0;
+    let balance = parseFloat('<?php echo $_SESSION['balance'] ?? 0; ?>') || 0;
     let doubleEarnings = false;
+    let evaluatedImages = <?php echo json_encode($_SESSION['evaluatedImages'] ?? []); ?> || [];
+
+    // Shuffle images and filter out evaluated ones
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    shuffle(images);
+
+    // Filter out evaluated images
+    images = images.filter((img, idx) => !evaluatedImages.includes(idx));
+
+    if (images.length === 0) {
+        // All images evaluated, reset
+        evaluatedImages = [];
+        // Reload all images shuffled
+        images = [
+            "https://i.postimg.cc/QMQ3ZBrj/Captura-de-Tela-2025-05-20-a-s-20-56-33.png",
+            "https://i.postimg.cc/KzmyGZZB/Captura-de-Tela-2025-05-20-a-s-20-57-56.png",
+            "https://i.postimg.cc/bJLfdKJM/Captura-de-Tela-2025-05-20-a-s-20-58-21.png",
+            "https://i.postimg.cc/wjJKDtMD/Captura-de-Tela-2025-05-20-a-s-20-58-41.png",
+            "https://i.postimg.cc/c4p21shC/Captura-de-Tela-2025-05-20-a-s-21-00-41.png",
+            "https://i.postimg.cc/MKMg8cyg/Captura-de-Tela-2025-05-20-a-s-21-00-27.png",
+            "https://i.postimg.cc/44FjMvhz/Captura-de-Tela-2025-05-20-a-s-21-00-17.png",
+            "https://i.postimg.cc/GpHXvVqV/Captura-de-Tela-2025-05-20-a-s-21-00-54.png",
+            "https://i.postimg.cc/vmk3hhKB/Captura-de-Tela-2025-05-20-a-s-21-01-02.png",
+            "https://i.postimg.cc/kGrYJsNZ/Captura-de-Tela-2025-05-20-a-s-21-01-16.png",
+            "https://i.postimg.cc/HLxhBVsS/Captura-de-Tela-2025-05-20-a-s-21-01-25.png",
+            "https://i.postimg.cc/mD16WJ9C/Captura-de-Tela-2025-05-20-a-s-21-01-34.png",
+            "https://i.postimg.cc/cCQ9r3XJ/Captura-de-Tela-2025-05-20-a-s-21-01-46.png",
+            "https://i.postimg.cc/13yTVWx1/Captura-de-Tela-2025-05-20-a-s-21-01-58.png",
+        ];
+        shuffle(images);
+    }
 
     const popup = document.getElementById("popup");
     const popupBtn = document.getElementById("popup-btn");
@@ -235,7 +272,6 @@ $userEmail = $_SESSION['email'] ?? '';
     // Atualiza o saldo exibido
     function updateBalance() {
         balanceEl.textContent = balance.toFixed(2);
-        localStorage.setItem('onlycash_balance', balance.toFixed(2));
     }
 
     // Atualiza a copy do modal de saldo
@@ -286,14 +322,56 @@ $userEmail = $_SESSION['email'] ?? '';
         if (doubleEarnings) earn *= 2;
         earn = Math.round(earn * 100) / 100;
         balance += earn;
+
+        // Add current image index to evaluatedImages
+        evaluatedImages.push(currentIndex);
+
         updateBalance();
         showStatusMessage(`Ganaste $${earn.toFixed(2)}!`);
+
+        // Send updated balance and evaluatedImages to server
+        fetch('update_balance.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ balance: balance, evaluatedImages: evaluatedImages })
+        }).then(response => response.json())
+          .then(data => {
+              if (!data.success) {
+                  console.error('Failed to update balance:', data.error);
+              }
+          }).catch(err => {
+              console.error('Error updating balance:', err);
+          });
 
         currentQuestionIndex++;
         if (currentQuestionIndex >= questions[currentIndex].length) {
             currentQuestionIndex = 0;
             currentIndex++;
-            if (currentIndex >= images.length) currentIndex = 0;
+            if (currentIndex >= images.length) {
+                // Remove evaluated images from images array
+                images = images.filter((img, idx) => !evaluatedImages.includes(idx));
+                if (images.length === 0) {
+                    // Reset evaluatedImages and reload images
+                    evaluatedImages = [];
+                    images = [
+                        "https://i.postimg.cc/QMQ3ZBrj/Captura-de-Tela-2025-05-20-a-s-20-56-33.png",
+                        "https://i.postimg.cc/KzmyGZZB/Captura-de-Tela-2025-05-20-a-s-20-57-56.png",
+                        "https://i.postimg.cc/bJLfdKJM/Captura-de-Tela-2025-05-20-a-s-20-58-21.png",
+                        "https://i.postimg.cc/wjJKDtMD/Captura-de-Tela-2025-05-20-a-s-20-58-41.png",
+                        "https://i.postimg.cc/c4p21shC/Captura-de-Tela-2025-05-20-a-s-21-00-41.png",
+                        "https://i.postimg.cc/MKMg8cyg/Captura-de-Tela-2025-05-20-a-s-21-00-27.png",
+                        "https://i.postimg.cc/44FjMvhz/Captura-de-Tela-2025-05-20-a-s-21-00-17.png",
+                        "https://i.postimg.cc/GpHXvVqV/Captura-de-Tela-2025-05-20-a-s-21-00-54.png",
+                        "https://i.postimg.cc/vmk3hhKB/Captura-de-Tela-2025-05-20-a-s-21-01-02.png",
+                        "https://i.postimg.cc/kGrYJsNZ/Captura-de-Tela-2025-05-20-a-s-21-01-16.png",
+                        "https://i.postimg.cc/HLxhBVsS/Captura-de-Tela-2025-05-20-a-s-21-01-25.png",
+                        "https://i.postimg.cc/mD16WJ9C/Captura-de-Tela-2025-05-20-a-s-21-01-34.png",
+                        "https://i.postimg.cc/cCQ9r3XJ/Captura-de-Tela-2025-05-20-a-s-21-01-46.png",
+                        "https://i.postimg.cc/13yTVWx1/Captura-de-Tela-2025-05-20-a-s-21-01-58.png",
+                    ];
+                }
+                currentIndex = 0;
+            }
             updateImage();
         }
         updateQuestion();
@@ -321,9 +399,23 @@ $userEmail = $_SESSION['email'] ?? '';
         paymentModal.classList.remove("hidden");
         setTimeout(() => {
             paymentModal.classList.add("hidden");
-            showStatusMessage("Pago aprobado. ¡Tus ganancias han sido liberadas!");
             balance = 0;
-            updateBalance();
+            // Update server with new balance
+            fetch('update_balance.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ balance: balance, evaluatedImages: evaluatedImages })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      showStatusMessage("Pago aprobado. ¡Tus ganancias han sido liberadas!");
+                      updateBalance();
+                  } else {
+                      console.error('Failed to update balance:', data.error);
+                  }
+              }).catch(err => {
+                  console.error('Error updating balance:', err);
+              });
         }, 5000);
     });
 
